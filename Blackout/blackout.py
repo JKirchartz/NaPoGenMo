@@ -9,66 +9,68 @@
 """
 Generate blackout poetry from a random newspaper article
 
-10,000 most common words: http://splasho.com/upgoer5/phpspellcheck/dictionaries/1000.dicin
-
+Ensuring common word using Dwyl's copy of the Infochimps 350,000 simple english
+words from: https://github.com/dwyl/english-words
 """
 
 # TODO: find rhyming words to keep from text, block out more unique words -- keep more common words (not just stopwords)
 import random, re
 import newspaper
+import codecs
 from pattern.en import parsetree
 
 
 # import most common words
-with open("1000.dicin") as word_file:
+with codecs.open("words.txt", encoding='utf-8') as word_file:
     english_words = set(word.strip().lower() for word in word_file)
-
-# fix word encoding (Assuming everything is utf-8)
-def fix(word):
-    word = word.decode('utf-8', 'ignore')
-    return word.encode('ascii', 'ignore')
 
 # blackout anything that isn't a space
 def blackout(word):
-    return re.sub(r"\S", "█", fix(word))
+    return re.sub(r"\S", u"█", word)
 
 # blackout words _not_ in the list of common words
 def blackout_hard_words(word):
-    word = fix(word)
     if word.lower() not in english_words:
         return blackout(word)
     else:
         return word;
 
 def generate():
-    papers = [u'http://nhgazette.com', u'http://post-gazette.com', u'http://cnn.com', u'http://nytimes.com', u'http://fox13news.com', u'http://medium.com', u'http://wired.com']
+    papers = [u'http://usatoday.com', u'http://nhgazette.com', u'http://post-gazette.com', u'http://cnn.com', u'http://nytimes.com', u'http://fox13news.com', u'http://wired.com']
     paper = random.choice(papers)
     news = newspaper.build(paper)
     if len(news.articles) is 0:
-      return "failed reading from %s" % paper
-    print "pick one out of %s articles from %s" % (len(news.articles), paper);
+      return
     articles = news.articles[:]
     article = random.choice(articles)
     article.download()
     article.parse()
 
-    s = parsetree(fix(article.text), relations=True, lemmata=True)
+    s = parsetree(article.text, relations=True, lemmata=True)
 
-    output = list()
-    output.append('\n---\n\n')
-    output.append('article:')
+    output = list(u'')
+    output.append(u'\n---\n\n')
+    output.append(u'article:')
     output.append(article.url)
-    output.append('\n---\n\n')
+    output.append(u'\n---\n\n')
     for sentence in s:
         for chunk in sentence.chunks:
-            sentence_fragment = ' '.join([(blackout_hard_words(w.string)) for w in chunk.words])
+            sentence_fragment = u' '.join([(blackout_hard_words(w.string)) for w in chunk.words])
+            sentence_fragments = sentence_fragment.split()
+            # TODO: blackout random words in sentence fragment, blackout slightly less fragments
             if random.random() < 0.8:
                 output.append(blackout(sentence_fragment))
             else:
-                output.append(fix(sentence_fragment))
+                output.append(sentence_fragment)
 
-    return ' '.join(output)
+    return u' '.join(output)
 
+output = list(u'')
 for i in range(0,10):
-    print generate();
+     tmp = generate()
+     if tmp:
+        output.append(tmp)
 
+
+with codecs.open('poetry.txt', 'wa', encoding='utf-8') as f:
+    f.write(u'\n\n'.join(output))
