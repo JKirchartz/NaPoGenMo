@@ -17,7 +17,7 @@ words from: https://github.com/dwyl/english-words
 import random, re
 import newspaper
 import codecs
-from pattern.en import parsetree
+from pattern.en import parsetree, mood
 
 
 # import most common words
@@ -62,15 +62,23 @@ def generate():
     output.append(article.url)
     output.append(u'\n---\n\n')
     for sentence in s:
-        for chunk in sentence.chunks:
-            sentence_fragment = u' '.join([(blackout_hard_words(w.string)) for w in chunk.words])
-            # black out random words in sentence fragment
-            sentence_fragment = u' '.join(blackout_random_word(sentence_fragment.split()))
-            # black out random phrases
-            if random.random() < 0.6:
-                output.append(blackout(sentence_fragment))
-            else:
-                output.append(sentence_fragment)
+        if mood(sentence) not in set(['imperative', 'conditional', 'subjunctive']): # filter out definitive facts
+            output.append(blackout(sentence.string))
+        else:
+            last_chunk = ''
+            for chunk in sentence.chunks:
+              if (chunk.type is last_chunk): # reduce repeating chunk types
+                    output.append(u' '.join([(blackout(w.string)) for w in chunk.words]))
+              else:
+                sentence_fragment = u' '.join([(blackout_hard_words(w.string)) for w in chunk.words])
+                # black out random words in sentence fragment
+                sentence_fragment = u' '.join(blackout_random_word(sentence_fragment.split()))
+                # black out random phrases
+                if random.random() < 0.6:
+                    output.append(blackout(sentence_fragment))
+                else:
+                    output.append(sentence_fragment)
+            last_chunk = chunk.type
 
     return u' '.join(output)
 
@@ -81,5 +89,5 @@ for i in range(0,10):
         output.append(tmp)
 
 
-with codecs.open('poetry.txt', 'wa', encoding='utf-8') as f:
+with codecs.open('poetry.txt', 'a', encoding='utf-8') as f:
     f.write(u'\n\n'.join(output))
