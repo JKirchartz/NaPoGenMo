@@ -59,7 +59,9 @@ def generate():
 
     output = list(u'')
     output.append(u'\n---\n\n')
-    output.append(u'article:')
+    output.append(u'title:')
+    output.append(article.title)
+    output.append(u'\narticle:')
     output.append(article.url)
     output.append(u'\n---\n\n')
     for sentence in s:
@@ -71,6 +73,7 @@ def generate():
               if (chunk.type is last_chunk): # reduce repeating chunk types
                     output.append(u' '.join([(blackout(w.string)) for w in chunk.words]))
               else:
+                # only use words in our dictionary (to avoid names, etc)
                 sentence_fragment = u' '.join([(blackout_hard_words(w.string)) for w in chunk.words])
                 # black out random words in sentence fragment
                 sentence_fragment = u' '.join(blackout_random_word(sentence_fragment.split()))
