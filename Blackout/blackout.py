@@ -35,6 +35,14 @@ def blackout_hard_words(word):
     else:
         return word;
 
+def blackout_random_word(words):
+    for i,w in enumerate(words):
+          if random.random() > 0.5:
+              words[i] = blackout(w)
+          else:
+              words[i] = w
+    return words
+
 def generate():
     papers = [u'http://usatoday.com', u'http://nhgazette.com', u'http://post-gazette.com', u'http://cnn.com', u'http://nytimes.com', u'http://fox13news.com', u'http://wired.com']
     paper = random.choice(papers)
@@ -56,9 +64,10 @@ def generate():
     for sentence in s:
         for chunk in sentence.chunks:
             sentence_fragment = u' '.join([(blackout_hard_words(w.string)) for w in chunk.words])
-            sentence_fragments = sentence_fragment.split()
-            # TODO: blackout random words in sentence fragment, blackout slightly less fragments
-            if random.random() < 0.8:
+            # black out random words in sentence fragment
+            sentence_fragment = u' '.join(blackout_random_word(sentence_fragment.split()))
+            # black out random phrases
+            if random.random() < 0.6:
                 output.append(blackout(sentence_fragment))
             else:
                 output.append(sentence_fragment)
