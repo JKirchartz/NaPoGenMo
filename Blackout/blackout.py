@@ -44,7 +44,7 @@ def blackout_random_word(words):
     return words
 
 def generate():
-    papers = [u'http://usatoday.com', u'http://nhgazette.com', u'http://post-gazette.com', u'http://cnn.com', u'http://nytimes.com', u'http://fox13news.com', u'http://wired.com']
+    papers = [u'http://theonion.com', u'http://dailymail.co.uk', u'http://www.bbc.co.uk/', u'http://usatoday.com', u'http://nhgazette.com', u'http://post-gazette.com', u'http://cnn.com', u'http://nytimes.com', u'http://fox13news.com', u'http://wired.com']
     paper = random.choice(papers)
     news = newspaper.build(paper)
     if len(news.articles) is 0:
