@@ -17,10 +17,10 @@ words from: https://github.com/dwyl/english-words
 import random, re
 import newspaper
 import codecs
-from pattern.en import parsetree, mood
+from pattern.en import parsetree
 
 
-# import most common words
+# import dictionary
 with codecs.open("words.txt", encoding='utf-8') as word_file:
     english_words = set(word.strip().lower() for word in word_file)
 
@@ -28,27 +28,25 @@ with codecs.open("words.txt", encoding='utf-8') as word_file:
 def blackout(word):
     return re.sub(r"\S", u"█", word)
 
-# blackout words _not_ in the list of common words
-def blackout_hard_words(word):
-    if word.lower() not in english_words:
+# blackout words _not_ in the dictionary, or that are part of a contraction
+def blackout_unwanted_words(word):
+    if word.lower() not in english_words or "'" in word:
         return blackout(word)
     else:
         return word;
 
 def blackout_random_word(words):
-    for i,w in enumerate(words):
-          if random.random() > 0.5:
-              words[i] = blackout(w)
-          else:
-              words[i] = w
+    if random.random() > 0.7:
+        wlen = len(words)
+        randIndex = random.range(0, wlen)
+        words[i] = blackout(words[i])
     return words
 
 def generate():
-    papers = [u'http://theonion.com', u'http://dailymail.co.uk', u'http://www.bbc.co.uk/', u'http://usatoday.com', u'http://nhgazette.com', u'http://post-gazette.com', u'http://cnn.com', u'http://nytimes.com', u'http://fox13news.com', u'http://wired.com']
-    papers = papers + newspaper.popular_urls()
-    paper = random.choice(papers)
+    paper = random.choice(newspaper.popular_urls())
     news = newspaper.build(paper)
     if len(news.articles) is 0:
+      print "no articles found in %s" % paper
       return
     articles = news.articles[:]
     article = random.choice(articles)
@@ -65,33 +63,39 @@ def generate():
     output.append(article.url)
     output.append(u'\n---\n\n')
     for sentence in s:
-        if mood(sentence) not in set(['imperative', 'conditional', 'subjunctive']): # filter out definitive facts
-            output.append(blackout(sentence.string))
-        else:
-            last_chunk = ''
-            for chunk in sentence.chunks:
-              if (chunk.type is last_chunk): # reduce repeating chunk types
-                    output.append(u' '.join([(blackout(w.string)) for w in chunk.words]))
-              else:
-                # only use words in our dictionary (to avoid names, etc)
-                sentence_fragment = u' '.join([(blackout_hard_words(w.string)) for w in chunk.words])
-                # black out random words in sentence fragment
-                sentence_fragment = u' '.join(blackout_random_word(sentence_fragment.split()))
-                # black out random phrases
-                if random.random() < 0.6:
-                    output.append(blackout(sentence_fragment))
-                else:
-                    output.append(sentence_fragment)
-            last_chunk = chunk.type
+        last_chunk = ''
+        for chunk in sentence.chunks:
+          if (chunk.type is last_chunk): # reduce repeating chunk types
+                output.append(u' '.join([(blackout(w.string)) for w in chunk.words]))
+          else:
+            # only use words in our dictionary (to avoid names, etc)
+            sentence_fragment = u' '.join([(blackout_unwanted_words(w.string)) for w in chunk.words])
+            # black out random words in sentence fragment
+            sentence_fragment = u' '.join(blackout_random_word(sentence_fragment.split()))
+            # black out phrase
+            if random.random() > 0.8:
+                output.append(blackout(sentence_fragment))
+            else:
+                output.append(sentence_fragment)
+        last_chunk = chunk.type
 
     return u' '.join(output)
 
 output = list(u'')
-for i in range(0,10):
-     tmp = generate()
-     if tmp:
-        output.append(tmp)
+i = 0
+print "Generating 10 'poems'"
+while i < 10:
+     try:
+        tmp = generate()
+        if len(tmp):
+            output.append(tmp)
+            i = i + 1
+            print "generating %s" % str(i)
+     except:
+         pass # if at first you don't succeed, try try again
 
 
 with codecs.open('poetry.txt', 'a', encoding='utf-8') as f:
     f.write(u'\n\n'.join(output))
+
+
