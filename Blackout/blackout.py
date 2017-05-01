@@ -46,7 +46,7 @@ def generate():
     paper = random.choice(newspaper.popular_urls())
     news = newspaper.build(paper)
     if len(news.articles) is 0:
-      print "no articles found in %s" % paper
+      print("no articles found in %s" % paper)
       return
     articles = news.articles[:]
     article = random.choice(articles)
@@ -83,14 +83,14 @@ def generate():
 
 output = list(u'')
 i = 0
-print "Generating 10 'poems'"
+print("Generating 10 'poems'")
 while i < 10:
      try:
         tmp = generate()
         if len(tmp):
             output.append(tmp)
             i = i + 1
-            print "generating %s" % str(i)
+            print("generating %s" % str(i))
      except:
          pass # if at first you don't succeed, try try again
 
